@@ -35,6 +35,37 @@ func unicStations(trains Trains) []Route {
 	return result
 }
 
-func createRoute(stations []Route) []Route {
-	return stations
+func createRoute(stations []Route, start int) (route []Route, length int) {
+	route = append(route, stations[start])
+	visited := map[Route]bool{}
+
+	for j := 0; j < 100; j++ {
+		for i := range stations {
+			if route[len(route)-1].ArrivalStationId == stations[i].DepartureStationId {
+				if visited[stations[i]] != true {
+					visited[stations[i]] = true
+					route = append(route, stations[i])
+				} else {
+					next := stations[i]
+					route, visited = searchVisited(route, stations, next, visited)
+				}
+			}
+		}
+	}
+	length = len(visited)
+	return
+}
+
+func searchVisited(route []Route, stations []Route, next Route, visited map[Route]bool) (nextRoute []Route, newVisited map[Route]bool) {
+	for i := range stations {
+		if route[len(route)-1].ArrivalStationId == stations[i].DepartureStationId && next.DepartureStationId == stations[i].ArrivalStationId {
+			if visited[stations[i]] == true {
+				visited[stations[i]] = true
+				route = append(route, stations[i])
+			}
+		}
+	}
+	nextRoute = route
+	newVisited = visited
+	return
 }
