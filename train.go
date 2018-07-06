@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"math"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -63,37 +64,18 @@ func main() {
 	case "cheapest":
 		cheepestWay := cheapest(route, trains)
 		for i := range cheepestWay {
-			fmt.Println(" ")
-			fmt.Print("TrainId: ")
-			fmt.Println(cheepestWay[i].TrainId)
-			fmt.Print("DepartureStationId: ")
-			fmt.Println(cheepestWay[i].DepartureStationId)
-			fmt.Print("ArrivalStationId: ")
-			fmt.Println(cheepestWay[i].ArrivalStationId)
-			fmt.Print("Price: ")
-			fmt.Println(cheepestWay[i].Price)
-			fmt.Print("ArrivalTimeString: ")
-			fmt.Println(cheepestWay[i].ArrivalTimeString)
-			fmt.Print("DepartureTimeString ")
-			fmt.Println(cheepestWay[i].DepartureTimeString)
+			fmt.Println("TrainID: " + strconv.Itoa(cheepestWay[i].TrainId) + "\n" + "DepartureStationId: " + strconv.Itoa(cheepestWay[i].DepartureStationId) + "\n" +
+				"ArrivalStationId: " + strconv.Itoa(cheepestWay[i].ArrivalStationId) + "\n" + "Price: " + strconv.FormatFloat(cheepestWay[i].Price, 'f', 2, 32) + "\n" +
+				"ArrivalTimeString: " + cheepestWay[i].ArrivalTimeString + "\n" + "DepartureTimeString: " + cheepestWay[i].DepartureTimeString + "\n")
 		}
 
 	case "fastest":
 		fastestWay := fastest(route, trains)
 		for i := range fastestWay {
-			fmt.Println(" ")
-			fmt.Print("TrainId: ")
-			fmt.Println(fastestWay[i].TrainId)
-			fmt.Print("DepartureStationId: ")
-			fmt.Println(fastestWay[i].DepartureStationId)
-			fmt.Print("ArrivalStationId: ")
-			fmt.Println(fastestWay[i].ArrivalStationId)
-			fmt.Print("Price: ")
-			fmt.Println(fastestWay[i].Price)
-			fmt.Print("ArrivalTimeString: ")
-			fmt.Println(fastestWay[i].ArrivalTimeString)
-			fmt.Print("DepartureTimeString ")
-			fmt.Println(fastestWay[i].DepartureTimeString)
+			fmt.Println("TrainID: " + strconv.Itoa(fastestWay[i].TrainId) + "\n" + "DepartureStationId: " + strconv.Itoa(fastestWay[i].DepartureStationId) + "\n" +
+				"ArrivalStationId: " + strconv.Itoa(fastestWay[i].ArrivalStationId) + "\n" + "Price: " + strconv.FormatFloat(fastestWay[i].Price, 'f', 2, 32) + "\n" +
+				"ArrivalTimeString: " + fastestWay[i].ArrivalTimeString + "\n" + "DepartureTimeString: " + fastestWay[i].DepartureTimeString + "\n")
+
 		}
 	}
 }
@@ -209,10 +191,10 @@ func searchVisited(route []Route, stations []Route, next Route, visited map[Rout
 //searching for the cheapest trains
 func cheapest(route []Route, trains Trains) (trainsFinal []Train) {
 	var price float64
-	price = 1000000.00
 	var buff Train
 
 	for i := range route {
+		price = 1000000.00
 		for j := range trains.Train {
 			//checking trains with the same route and looking for cheapest one
 			if route[i].ArrivalStationId == trains.Train[j].ArrivalStationId && route[i].DepartureStationId == trains.Train[j].DepartureStationId && trains.Train[j].Price < price {
@@ -228,10 +210,10 @@ func cheapest(route []Route, trains Trains) (trainsFinal []Train) {
 //searching for the fastest trains
 func fastest(route []Route, trains Trains) (trainsFinal []Train) {
 	var time float64
-	time = 1000000.00
 	var buff Train
 
 	for i := range route {
+		time = 1000000.00
 		for j := range trains.Train {
 			//getting how long train goes between stations
 			buffTime := duration(trains.Train[j].ArrivalTimeString, trains.Train[j].DepartureTimeString)
