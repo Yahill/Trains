@@ -148,7 +148,7 @@ func createRoute(stations []Route, start int) (route []Route, length int) {
 	//map with visited stations
 	visited := map[Route]bool{}
 
-	for j := 0; j < 100; j++ {
+	for j := 0; j < 2*len(stations); j++ {
 		//going through all the stations
 		for i := range stations {
 			//cheking if stations connected
