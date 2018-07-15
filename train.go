@@ -38,14 +38,14 @@ func main() {
 	flag.Parse()
 
 	//reading xml file
-	trains := readXML()
+	trains := ReadXML()
 	//finding unic stations
-	unicStations := unicStations(trains)
+	unicStations := UnicStations(trains)
 
 	//searching for the best route
 	for i := range unicStations {
 		length := 200000
-		buff, buffLength := createRoute(unicStations, i)
+		buff, buffLength := CreateRoute(unicStations, i)
 
 		if buffLength < length {
 			route = buff
@@ -62,7 +62,7 @@ func main() {
 		fmt.Println("Choose option: -option=cheepest or -option=fastest.")
 
 	case "cheapest":
-		cheepestWay := cheapest(route, trains)
+		cheepestWay := Cheapest(route, trains)
 		for i := range cheepestWay {
 			fmt.Println("TrainID: " + strconv.Itoa(cheepestWay[i].TrainId) + "\n" + "DepartureStationId: " + strconv.Itoa(cheepestWay[i].DepartureStationId) + "\n" +
 				"ArrivalStationId: " + strconv.Itoa(cheepestWay[i].ArrivalStationId) + "\n" + "Price: " + strconv.FormatFloat(cheepestWay[i].Price, 'f', 2, 32) + "\n" +
@@ -70,7 +70,7 @@ func main() {
 		}
 
 	case "fastest":
-		fastestWay := fastest(route, trains)
+		fastestWay := Fastest(route, trains)
 		for i := range fastestWay {
 			fmt.Println("TrainID: " + strconv.Itoa(fastestWay[i].TrainId) + "\n" + "DepartureStationId: " + strconv.Itoa(fastestWay[i].DepartureStationId) + "\n" +
 				"ArrivalStationId: " + strconv.Itoa(fastestWay[i].ArrivalStationId) + "\n" + "Price: " + strconv.FormatFloat(fastestWay[i].Price, 'f', 2, 32) + "\n" +
@@ -80,8 +80,8 @@ func main() {
 	}
 }
 
-//reading xml file
-func readXML() (trains Trains) {
+func ReadXML() (trains Trains) {
+	//reading xml file
 
 	//open file
 	xmlFile, err := os.Open("data.xml")
@@ -107,8 +107,9 @@ func readXML() (trains Trains) {
 	return
 }
 
-//searching for unic stations
-func unicStations(trains Trains) []Route {
+func UnicStations(trains Trains) []Route {
+	//searching for unic stations
+
 	//map with visited stations
 	encountered := map[Route]bool{}
 	//structure with arrivalStationId and departureStationId
@@ -141,8 +142,9 @@ func unicStations(trains Trains) []Route {
 	return result
 }
 
-//create the best route to visit all stations
-func createRoute(stations []Route, start int) (route []Route, length int) {
+func CreateRoute(stations []Route, start int) (route []Route, length int) {
+	//create the best route to visit all stations
+
 	//appending starting station
 	route = append(route, stations[start])
 	//map with visited stations
@@ -163,7 +165,7 @@ func createRoute(stations []Route, start int) (route []Route, length int) {
 					//if we haven't got unvisited stations, taking next station
 					next := stations[i]
 					//checking if we have station connected between this stations in vivited map
-					route, visited = searchVisited(route, stations, next, visited)
+					route, visited = SearchVisited(route, stations, next, visited)
 				}
 			}
 		}
@@ -172,8 +174,9 @@ func createRoute(stations []Route, start int) (route []Route, length int) {
 	return
 }
 
-//checking visited route
-func searchVisited(route []Route, stations []Route, next Route, visited map[Route]bool) (nextRoute []Route, newVisited map[Route]bool) {
+func SearchVisited(route []Route, stations []Route, next Route, visited map[Route]bool) (nextRoute []Route, newVisited map[Route]bool) {
+	//checking visited route
+
 	for i := range stations {
 		//checking if we have station connected with previous and next station
 		if route[len(route)-1].ArrivalStationId == stations[i].DepartureStationId && next.DepartureStationId == stations[i].ArrivalStationId {
@@ -188,8 +191,9 @@ func searchVisited(route []Route, stations []Route, next Route, visited map[Rout
 	return
 }
 
-//searching for the cheapest trains
-func cheapest(route []Route, trains Trains) (trainsFinal []Train) {
+func Cheapest(route []Route, trains Trains) (trainsFinal []Train) {
+	//searching for the cheapest trains
+
 	var price float64
 	var buff Train
 
@@ -207,8 +211,9 @@ func cheapest(route []Route, trains Trains) (trainsFinal []Train) {
 	return
 }
 
-//searching for the fastest trains
-func fastest(route []Route, trains Trains) (trainsFinal []Train) {
+func Fastest(route []Route, trains Trains) (trainsFinal []Train) {
+	//searching for the fastest trains
+
 	var time float64
 	var buff Train
 
@@ -216,7 +221,7 @@ func fastest(route []Route, trains Trains) (trainsFinal []Train) {
 		time = 1000000.00
 		for j := range trains.Train {
 			//getting how long train goes between stations
-			buffTime := duration(trains.Train[j].ArrivalTimeString, trains.Train[j].DepartureTimeString)
+			buffTime := Duration(trains.Train[j].ArrivalTimeString, trains.Train[j].DepartureTimeString)
 			//checking trains with the same route and looking for the fastest one
 			if route[i].ArrivalStationId == trains.Train[j].ArrivalStationId && route[i].DepartureStationId == trains.Train[j].DepartureStationId && buffTime < time {
 				buff = trains.Train[j]
@@ -228,8 +233,9 @@ func fastest(route []Route, trains Trains) (trainsFinal []Train) {
 	return
 }
 
-//counting how long train goes between stations
-func duration(arrival, departure string) (result float64) {
+func Duration(arrival, departure string) (result float64) {
+	//counting how long train goes between stations
+
 	var layout string
 	var arrivalBuff string
 	var departureBuff string
