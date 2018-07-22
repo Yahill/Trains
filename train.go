@@ -38,29 +38,12 @@ func main() {
 	option := flag.String("option", "nill", "Choose option: cheapest ot fastest.")
 	flag.Parse()
 
-	//route which will contain ready route for the passanger
-	var route []int
-	//route from departurte station to all other
-	allRouteFromDepartureStation := []int{}
 	//reading xml file
 	trains := ReadXML()
 	//nodes graph
 	nodes := CreateGraph(trains)
-	//count whole route from graph
-	DeapthFirstSearch(*departureStation, nodes, func(node int) {
-		allRouteFromDepartureStation = append(allRouteFromDepartureStation, node)
-	})
-	//create route to the arrival station
-	for i := range allRouteFromDepartureStation {
-		if allRouteFromDepartureStation[i] != *arrivalStation {
-			buff := allRouteFromDepartureStation[i]
-			route = append(route, buff)
-		} else {
-			buff := allRouteFromDepartureStation[i]
-			route = append(route, buff)
-			break
-		}
-	}
+	//the ready route
+	route := CreateRoute(*departureStation, *arrivalStation, nodes)
 
 	//handling flag options
 	switch *option {
@@ -86,6 +69,30 @@ func main() {
 				"ArrivalTimeString: " + resultTrains[i].ArrivalTimeString + "\n" + "DepartureTimeString: " + resultTrains[i].DepartureTimeString + "\n")
 		}
 	}
+}
+
+func CreateRoute(departureStation, arrivalStation int, nodes map[int][]int) []int {
+	//route which will contain ready route for the passanger
+	var route []int
+	//route from departurte station to all other
+	allRouteFromDepartureStation := []int{}
+
+	//count whole route from graph
+	DeapthFirstSearch(departureStation, nodes, func(node int) {
+		allRouteFromDepartureStation = append(allRouteFromDepartureStation, node)
+	})
+	//create route to the arrival station
+	for i := range allRouteFromDepartureStation {
+		if allRouteFromDepartureStation[i] != arrivalStation {
+			buff := allRouteFromDepartureStation[i]
+			route = append(route, buff)
+		} else {
+			buff := allRouteFromDepartureStation[i]
+			route = append(route, buff)
+			break
+		}
+	}
+	return route
 }
 
 func ReadXML() (trains Trains) {
