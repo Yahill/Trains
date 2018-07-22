@@ -31,51 +31,63 @@ type Train struct {
 }
 
 func main() {
-	var route []Route
 
+	//route which will contain ready route for the passanger
+	var route []int
+	//route from departurte station to all other
+	allRouteFromDepartureStation := []int{}
+
+	//flags for options
+	departureStation := flag.Int("Departure", 1, "Enter departure station")
+	arrivalStation := flag.Int("Arrival", 1, "Enter arrival station")
 	option := flag.String("option", "nill", "Choose option: cheapest ot fastest.")
-
 	flag.Parse()
 
 	//reading xml file
 	trains := ReadXML()
-	//finding unic stations
-	unicStations := UnicStations(trains)
 
-	//searching for the best route
-	for i := range unicStations {
-		length := 200000
-		buff, buffLength := CreateRoute(unicStations, i)
+	//nodes graph
+	nodes := CreateGraph(trains)
 
-		if buffLength < length {
-			route = buff
-			length = buffLength
+	//count whole route from graph
+	DeapthFirstSearch(*departureStation, nodes, func(node int) {
+		allRouteFromDepartureStation = append(allRouteFromDepartureStation, node)
+	})
+
+	//create route to the arrival station
+	for i := range allRouteFromDepartureStation {
+		if allRouteFromDepartureStation[i] != *arrivalStation {
+			buff := allRouteFromDepartureStation[i]
+			route = append(route, buff)
+		} else {
+			buff := allRouteFromDepartureStation[i]
+			route = append(route, buff)
+			break
 		}
 	}
-	fmt.Print("Route: ")
-	fmt.Println(route)
 
-	//check option
+	//handling flag options
 	switch *option {
 
 	case "nill":
-		fmt.Println("Choose option: -option=cheepest or -option=fastest.")
+		fmt.Println("Choose option: -option=cheapest or -option=fastest.")
 
 	case "cheapest":
-		cheepestWay := Cheapest(route, trains)
-		for i := range cheepestWay {
-			fmt.Println("TrainID: " + strconv.Itoa(cheepestWay[i].TrainId) + "\n" + "DepartureStationId: " + strconv.Itoa(cheepestWay[i].DepartureStationId) + "\n" +
-				"ArrivalStationId: " + strconv.Itoa(cheepestWay[i].ArrivalStationId) + "\n" + "Price: " + strconv.FormatFloat(cheepestWay[i].Price, 'f', 2, 32) + "\n" +
-				"ArrivalTimeString: " + cheepestWay[i].ArrivalTimeString + "\n" + "DepartureTimeString: " + cheepestWay[i].DepartureTimeString + "\n")
+		resultTrains := CheapestOption(route, trains)
+		fmt.Println(route)
+		for i := range resultTrains {
+			fmt.Println("TrainID: " + strconv.Itoa(resultTrains[i].TrainId) + "\n" + "DepartureStationId: " + strconv.Itoa(resultTrains[i].DepartureStationId) + "\n" +
+				"ArrivalStationId: " + strconv.Itoa(resultTrains[i].ArrivalStationId) + "\n" + "Price: " + strconv.FormatFloat(resultTrains[i].Price, 'f', 2, 32) + "\n" +
+				"ArrivalTimeString: " + resultTrains[i].ArrivalTimeString + "\n" + "DepartureTimeString: " + resultTrains[i].DepartureTimeString + "\n")
 		}
 
 	case "fastest":
-		fastestWay := Fastest(route, trains)
-		for i := range fastestWay {
-			fmt.Println("TrainID: " + strconv.Itoa(fastestWay[i].TrainId) + "\n" + "DepartureStationId: " + strconv.Itoa(fastestWay[i].DepartureStationId) + "\n" +
-				"ArrivalStationId: " + strconv.Itoa(fastestWay[i].ArrivalStationId) + "\n" + "Price: " + strconv.FormatFloat(fastestWay[i].Price, 'f', 2, 32) + "\n" +
-				"ArrivalTimeString: " + fastestWay[i].ArrivalTimeString + "\n" + "DepartureTimeString: " + fastestWay[i].DepartureTimeString + "\n")
-
+		resultTrains := FastestOption(route, trains)
+		fmt.Println(route)
+		for i := range resultTrains {
+			fmt.Println("TrainID: " + strconv.Itoa(resultTrains[i].TrainId) + "\n" + "DepartureStationId: " + strconv.Itoa(resultTrains[i].DepartureStationId) + "\n" +
+				"ArrivalStationId: " + strconv.Itoa(resultTrains[i].ArrivalStationId) + "\n" + "Price: " + strconv.FormatFloat(resultTrains[i].Price, 'f', 2, 32) + "\n" +
+				"ArrivalTimeString: " + resultTrains[i].ArrivalTimeString + "\n" + "DepartureTimeString: " + resultTrains[i].DepartureTimeString + "\n")
 		}
 	}
 }
@@ -107,7 +119,7 @@ func ReadXML() (trains Trains) {
 	return
 }
 
-func UnicStations(trains Trains) []Route {
+func CreateGraph(trains Trains) map[int][]int {
 	//searching for unic stations
 
 	//map with visited stations
@@ -116,6 +128,9 @@ func UnicStations(trains Trains) []Route {
 	var allStations []Route
 	//structure with all unic stations
 	var result []Route
+	//create map
+	var graph map[int][]int
+	graph = make(map[int][]int)
 
 	//create first structure with all the stations
 	for i := 0; i < len(trains.Train); i++ {
@@ -139,116 +154,81 @@ func UnicStations(trains Trains) []Route {
 			result = append(result, buff)
 		}
 	}
-	return result
+
+	//create graph from unic stations
+	for i := range result {
+		graph[result[i].DepartureStationId] = append(graph[result[i].DepartureStationId], result[i].ArrivalStationId)
+	}
+
+	return graph
 }
 
-func CreateRoute(stations []Route, start int) (route []Route, length int) {
-	//create the best route to visit all stations
+func DeapthFirstSearch(node int, nodes map[int][]int, fn func(int)) {
+	//recursive with deapth-first search
+	Recursive(node, map[int]bool{}, fn, nodes)
+}
 
-	//appending starting station
-	route = append(route, stations[start])
-	//map with visited stations
-	visited := map[Route]bool{}
-
-	for j := 0; j < 2*len(stations); j++ {
-		//going through all the stations
-		for i := range stations {
-			//cheking if stations connected
-			if route[len(route)-1].ArrivalStationId == stations[i].DepartureStationId {
-				//if we haven't visited this station yet append it and put into map with visited stations
-				if visited[stations[i]] != true {
-					//put in a map
-					visited[stations[i]] = true
-					//appending to the route
-					route = append(route, stations[i])
-				} else {
-					//if we haven't got unvisited stations, taking next station
-					next := stations[i]
-					//checking if we have station connected between this stations in vivited map
-					route, visited = SearchVisited(route, stations, next, visited)
-				}
-			}
+func Recursive(node int, currentStation map[int]bool, fn func(int), nodes map[int][]int) {
+	//putting station to the map so we can understand that we have visited it
+	currentStation[node] = true
+	fn(node)
+	//cheking from all graph elements every edge
+	for _, n := range nodes[node] {
+		//we have edge to the next station and it is not in map create recursion
+		if _, ok := currentStation[n]; !ok {
+			Recursive(n, currentStation, fn, nodes)
 		}
 	}
-	length = len(visited)
-	return
 }
 
-func SearchVisited(route []Route, stations []Route, next Route, visited map[Route]bool) (nextRoute []Route, newVisited map[Route]bool) {
-	//checking visited route
-
-	for i := range stations {
-		//checking if we have station connected with previous and next station
-		if route[len(route)-1].ArrivalStationId == stations[i].DepartureStationId && next.DepartureStationId == stations[i].ArrivalStationId {
-			if visited[stations[i]] == true {
-				visited[stations[i]] = true
-				route = append(route, stations[i])
-			}
-		}
-	}
-	nextRoute = route
-	newVisited = visited
-	return
-}
-
-func Cheapest(route []Route, trains Trains) (trainsFinal []Train) {
-	//searching for the cheapest trains
-
-	var price float64
+func CheapestOption(route []int, trains Trains) []Train {
+	//trains which need to use
+	var resultTrains []Train
 	var buff Train
 
-	for i := range route {
-		price = 1000000.00
+	//go through whole route
+	for i := 0; i < len(route)-1; i++ {
+		//buff price
+		price := 1000000.00
+		//check all trains
 		for j := range trains.Train {
-			//checking trains with the same route and looking for cheapest one
-			if route[i].ArrivalStationId == trains.Train[j].ArrivalStationId && route[i].DepartureStationId == trains.Train[j].DepartureStationId && trains.Train[j].Price < price {
-				buff = trains.Train[j]
+			//if train has this stations and his price is lowest than add it to trains
+			if trains.Train[j].DepartureStationId == route[i] && trains.Train[j].ArrivalStationId == route[i+1] && trains.Train[j].Price < price {
 				price = trains.Train[j].Price
+				buff = trains.Train[j]
 			}
 		}
-		trainsFinal = append(trainsFinal, buff)
+		//adding trains
+		resultTrains = append(resultTrains, buff)
 	}
-	return
+
+	return resultTrains
 }
 
-func Fastest(route []Route, trains Trains) (trainsFinal []Train) {
-	//searching for the fastest trains
-
-	var time float64
+func FastestOption(route []int, trains Trains) []Train {
+	//trains which need to use
+	var resultTrains []Train
 	var buff Train
 
-	for i := range route {
-		time = 1000000.00
+	//go through whole routes
+	for i := 0; i < len(route)-1; i++ {
+		//buff duration
+		duration := 10000000000000.00
+		//check all trains
 		for j := range trains.Train {
-			//getting how long train goes between stations
-			buffTime := Duration(trains.Train[j].ArrivalTimeString, trains.Train[j].DepartureTimeString)
-			//checking trains with the same route and looking for the fastest one
-			if route[i].ArrivalStationId == trains.Train[j].ArrivalStationId && route[i].DepartureStationId == trains.Train[j].DepartureStationId && buffTime < time {
+			departureTime, _ := time.Parse("02-01-2006 15:04:05", "22-07-2018 "+trains.Train[j].DepartureTimeString)
+			arrivalTime, _ := time.Parse("02-01-2006 15:04:05", "22-07-2018 "+trains.Train[j].ArrivalTimeString)
+			difference := arrivalTime.Sub(departureTime).Seconds()
+			result := math.Abs(difference)
+			//if train has this stations and his duration the lowest add it to trains
+			if trains.Train[j].DepartureStationId == route[i] && trains.Train[j].ArrivalStationId == route[i+1] && result < duration {
+				duration = result
 				buff = trains.Train[j]
-				time = buffTime
 			}
 		}
-		trainsFinal = append(trainsFinal, buff)
+		//adding to trains
+		resultTrains = append(resultTrains, buff)
 	}
-	return
-}
 
-func Duration(arrival, departure string) (result float64) {
-	//counting how long train goes between stations
-
-	var layout string
-	var arrivalBuff string
-	var departureBuff string
-
-	layout = "2006-01-02T15:04:05.000Z"
-
-	arrivalBuff = "2017-08-31T" + arrival + ".000Z"
-	departureBuff = "2017-08-31T" + departure + ".000Z"
-	arrivalTime, _ := time.Parse(layout, arrivalBuff)
-	departureTime, _ := time.Parse(layout, departureBuff)
-
-	difference := arrivalTime.Sub(departureTime).Seconds()
-	result = math.Abs(difference)
-
-	return
+	return resultTrains
 }
