@@ -32,28 +32,24 @@ type Train struct {
 
 func main() {
 
-	//route which will contain ready route for the passanger
-	var route []int
-	//route from departurte station to all other
-	allRouteFromDepartureStation := []int{}
-
 	//flags for options
 	departureStation := flag.Int("Departure", 1, "Enter departure station")
 	arrivalStation := flag.Int("Arrival", 1, "Enter arrival station")
 	option := flag.String("option", "nill", "Choose option: cheapest ot fastest.")
 	flag.Parse()
 
+	//route which will contain ready route for the passanger
+	var route []int
+	//route from departurte station to all other
+	allRouteFromDepartureStation := []int{}
 	//reading xml file
 	trains := ReadXML()
-
 	//nodes graph
 	nodes := CreateGraph(trains)
-
 	//count whole route from graph
 	DeapthFirstSearch(*departureStation, nodes, func(node int) {
 		allRouteFromDepartureStation = append(allRouteFromDepartureStation, node)
 	})
-
 	//create route to the arrival station
 	for i := range allRouteFromDepartureStation {
 		if allRouteFromDepartureStation[i] != *arrivalStation {
